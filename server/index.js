@@ -9,7 +9,7 @@ const mongoose=require('mongoose')
 const app=express()
 app.use(express.json())
 app.use(cors({
-  origin: 'https://dropqueue.netlify.app/',
+  origin: 'https://dropqueue.netlify.app',
   credentials: true
 }))
 
