@@ -16,7 +16,7 @@ router.get('/', async(req,res)=>{
 
 router.get('/top10', async(req,res)=>{
     try{
-        const data= await Song.find().sort({likes: -1}).limit(10)
+        const data = await Song.find().sort({likes: -1, _id: 1}).limit(10)
         res.json(data)
     } catch (err) {
         console.error(err)
@@ -27,14 +27,18 @@ router.get('/top10', async(req,res)=>{
 
 router.post('/',verifyToken,async(req,res)=>{
     try{
-        const count= await Song.countDocuments({addedBy: req.userId})
-        if(count>=10)return res.status(400).json({error: "You have reached the limit of 10 songs"})
+        const count= await Song.countDocuments({addedBy: req.username})
+        if(count>=50)return res.status(400).json({error: "You have reached the limit of 50 songs"})
 
         const existing= await Song.findOne({songid: req.body.songid})
         if(existing)return res.status(400).json({error: "Song already added"})
 
         const newSong = new Song({...req.body,addedBy: req.username})
         await newSong.save()
+
+        const io = req.app.get('io')
+        io.emit('song-added',newSong)
+
         res.status(201).json(newSong)
 
     } catch (err){
@@ -61,6 +65,10 @@ router.put('/:id/like',verifyToken,async(req,res)=>{
         song.likedBy.push(user)
     }
     await song.save()
+
+    const io = req.app.get('io')
+    io.emit('song-liked',song)
+
     res.json(song)
 })
 
@@ -69,11 +77,13 @@ router.delete('/:id',verifyToken, async(req,res)=>{
         const song= await Song.findById(req.params.id)
         if(!song)return res.status(404).json({error: 'song not found'})
 
-        if(song.addedBy!==req.userId){
+        if(song.addedBy!==req.username){
             return res.status(403).json({ error: 'You can only delete your own songs' })
         }
 
         await song.deleteOne()
+        const io=req.app.get('io')
+        io.emit('song-deleted',song._id)
         res.json({message: 'song deleted successfully'})
 
     } catch (err){

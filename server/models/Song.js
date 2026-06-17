@@ -7,6 +7,7 @@ const songSchema= new mongoose.Schema({
         likedBy:[String],
         artist: String,
         songName:String,
+        preview: String,
         appleMusicLink: String,
         spotifyLink: String,
         youtubeLink: String,
