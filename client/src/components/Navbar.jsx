@@ -1,5 +1,6 @@
 import React, { useContext } from 'react'
 import { UserContext } from '../contexts/UserContext'
+import { getUserColor } from '../utils/userColor'
 
 const Navbar = () => {
     const {user,chart,makechart,makeuser}=useContext(UserContext)
@@ -38,7 +39,7 @@ const Navbar = () => {
             <div className='bg-neutral-800/80 rounded-full py-2 px-4 font-lighter text-sm text-amber-50
             max-sm:py-2 max-sm:px-2 max-sm:text-xs'>
               <span >you are: </span>
-              <span className='text-purple-400'>{user}</span>
+              <span style={{ color: getUserColor(user) }}>{user}</span>
               <span onClick={logout} className='hover:underline cursor-pointer hover:text-purple-400'><br></br>click to logout</span>
             </div>
           </div>

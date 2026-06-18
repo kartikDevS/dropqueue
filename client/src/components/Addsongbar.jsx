@@ -31,6 +31,7 @@ const Addsongbar = () => {
                 likedBy:[],
                 artist: song.artistName,
                 songName: song.trackName,
+                preview: song.previewUrl,
                 appleMusicLink: apUrl(song.trackName, song.artistName),
                 spotifyLink: spUrl(song.trackName, song.artistName),
                 youtubeLink: ytUrl(song.trackName, song.artistName),
@@ -38,7 +39,6 @@ const Addsongbar = () => {
             }
             const apiUrl = import.meta.env.VITE_API_URL
             const res = await api.post('/song',{...songObj,deviceId})
-            makesong(prev => [...prev, res.data]);
             inputRef.current.value=''
         } catch(err){
             const message = err.response?.data?.error || "Song could not be added"

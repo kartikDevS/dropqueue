@@ -11,6 +11,7 @@ import Live from './components/Live'
 import Error from './components/Error'
 import axios from 'axios'
 import api from './api/api'
+import socket from './socket'  
 
 const App = () => {
   const [user, setUser] = useState(null)
@@ -19,8 +20,46 @@ const App = () => {
   const [error, setError] = useState(null)
   const [topSongs, settopSongs] = useState([])
   const [login, setLogin] = useState(true)
+  const [toast, setToast] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   const top3= topSongs.slice(0,3)
+
+
+
+useEffect(() => {
+  socket.off('song-added')
+  socket.on('song-added', (newSong) => {
+    setSongs(prev => {
+      const exists = prev.find(s => s._id === newSong._id)
+      if (exists) return prev 
+      return [...prev, newSong]
+    })
+    if (newSong.addedBy !== user) {
+      setToast(`${newSong.addedBy} just dropped ${newSong.songName} 🔥`)
+    }
+    else{
+      setToast('song added successfully!')
+    }
+    setTimeout(() => setToast(null), 4000) 
+  })
+
+ 
+  socket.on('song-liked', (updatedSong) => {
+    setSongs(prev => prev.map(s => s._id === updatedSong._id ? updatedSong : s))
+    settopSongs(prev => prev.map(s => s._id === updatedSong._id ? updatedSong : s))
+  })
+
+  socket.on('song-deleted',(deletedSongId)=>{
+    setSongs(prev=> prev.filter(s=> s._id!==deletedSongId))
+  })
+
+
+  return () => {
+    socket.off('song-added')
+    socket.off('song-liked')
+  }
+}, [user])
 
   useEffect(() => {
     const initialFetch= async()=>{
@@ -30,6 +69,8 @@ const App = () => {
         setSongs(res.data)
       } catch (err) {
         console.error(err)
+      } finally{
+        setLoading(false)
       }
     }
     initialFetch()
@@ -57,8 +98,6 @@ const App = () => {
   const likeSong= async(id)=>{
     try{
       const res= await api.put(`/song/${id}/like`)
-      setSongs(prev=>prev.map(song=> song._id===id ? res.data : song))
-      settopSongs(prev => prev.map(song => song._id === id ? res.data : song))
     } catch (err){
       console.error(err)
     }
@@ -66,9 +105,7 @@ const App = () => {
 
   const deletesong= async(id)=>{
     try{
-      const apiUrl = import.meta.env.VITE_API_URL
       const res= await api.delete(`/song/${id}`)
-      setSongs(prev => prev.filter(song => song._id !== id))
     } catch (err){
       const message = err.response?.data?.error || "Failed to delete song"
       setError(message)
@@ -77,11 +114,19 @@ const App = () => {
 
   return (
     <div className=' text-white flex flex-col items-center h-screen'>
-      <UserContext.Provider value={{user,makeuser:setUser,songs,makesong:setSongs,chart,
+      <UserContext.Provider value={{user,makeuser:setUser,songs,chart,
         makechart:setChart,error,makeerror:setError,likeSong,topSongs,top3,deletesong,
-        login,setlogin:setLogin}}>
+        login,setlogin:setLogin,loading}}>
         {error && <Error error={error} onClose={() => setError(null)}/>}
         {!user && <AuthModal/>}
+        {toast && (
+          <div className='fixed bottom-6 left-1/2 -translate-x-1/2 z-50
+          bg-neutral-900 border border-purple-500/50 text-amber-50 
+          text-sm px-5 py-3 rounded-full shadow-lg shadow-purple-900/30
+          animate-fade-in'>
+            {toast}
+          </div> 
+        )}
         <Navbar/>
         {!chart ? (
           <>

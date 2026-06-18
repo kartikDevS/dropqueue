@@ -1,5 +1,6 @@
 import React, { useContext } from 'react'
 import { UserContext } from '../contexts/UserContext'
+import { getUserColor } from '../utils/userColor'
 
 const CharList = () => {
     const{topSongs,likeSong,user}=useContext(UserContext)
@@ -28,8 +29,9 @@ const CharList = () => {
                 </div>
             </div>
             <div className='flex items-center gap-2'>
-                <span className='text-sm font-lighter text-amber-50/50'>
-                    {song.addedBy}
+                <span style={{ color: getUserColor(song.addedBy) }}
+                className='text-sm font-lighter text-amber-50/50'>
+                {song.addedBy}
                 </span>
                 <button onClick={()=>likeSong(song._id)}
                  className={`py-2 cursor-pointer px-3 hover:bg-amber-50/10 text-sm rounded border border-amber-50/50 ${song.likedBy.includes(user)?"text-red-500":"text-amber-50"}`}>❤︎ {song.likes}</button>
